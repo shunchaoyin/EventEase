@@ -1,0 +1,121 @@
+﻿@page "/home"
+@inject NavigationManager Navigation
+
+<PageTitle>EventEase - 专业的活动管理平台</PageTitle>
+
+<div class="home-page">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <i class="fas fa-calendar-star"></i>
+                欢迎来到 EventEase
+            </h1>
+            <p class="hero-subtitle">
+                专业的企业活动管理平台，让您的每一次活动都精彩纷呈
+            </p>
+            <div class="hero-actions">
+                <button class="btn btn-primary btn-lg" @onclick="NavigateToEvents">
+                    <i class="fas fa-search"></i>
+                    浏览活动
+                </button>
+                <button class="btn btn-outline-primary btn-lg" @onclick="LearnMore">
+                    <i class="fas fa-info-circle"></i>
+                    了解更多
+                </button>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-placeholder">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="features-section">
+        <div class="container">
+            <h2 class="section-title">为什么选择 EventEase？</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3>轻松管理</h3>
+                    <p>简洁直观的界面设计，让活动管理变得轻松简单</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>高效协作</h3>
+                    <p>多人协作功能，让团队成员能够无缝配合</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3>数据分析</h3>
+                    <p>详细的活动数据分析，帮您做出更好的决策</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>移动友好</h3>
+                    <p>响应式设计，随时随地管理您的活动</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-section">
+        <div class="container">
+            <h2 class="section-title">我们的成果</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">1000+</div>
+                    <div class="stat-label">成功举办的活动</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50000+</div>
+                    <div class="stat-label">满意的参与者</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">200+</div>
+                    <div class="stat-label">合作企业</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">客户满意度</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="cta-section">
+        <div class="container">
+            <div class="cta-content">
+                <h2>准备好开始您的活动了吗？</h2>
+                <p>立即浏览我们的活动列表，找到最适合您的活动</p>
+                <button class="btn btn-success btn-lg" @onclick="NavigateToEvents">
+                    <i class="fas fa-rocket"></i>
+                    立即开始
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void NavigateToEvents()
+    {
+        Navigation.NavigateTo("/events");
+    }
+    
+    private void LearnMore()
+    {
+        Navigation.NavigateTo("/about");
+    }
+}

@@ -1,0 +1,247 @@
+@page "/events/{EventId:int}"
+@inject IEventService EventService
+@inject IUserSessionService SessionService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(eventItem?.Name ?? "活动详情") - EventEase</PageTitle>
+
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+        <p>正在加载活动详情...</p>
+    </div>
+}
+else if (eventItem is null)
+{
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2>活动不存在</h2>
+        <p>抱歉，您要查看的活动不存在或已被删除。</p>
+        <button class="btn btn-primary" @onclick="NavigateToEvents">
+            <i class="fas fa-arrow-left"></i>
+            返回活动列表
+        </button>
+    </div>
+}
+else
+{
+    <div class="event-detail">
+        <div class="event-hero">
+            <div class="event-image-container">
+                @if (!string.IsNullOrEmpty(eventItem?.ImageUrl))
+                {
+                    <img src="@eventItem.ImageUrl" alt="@eventItem.Name" class="event-image" />
+                }
+                else
+                {
+                    <div class="placeholder-image">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                }
+                
+                @if (eventItem?.IsFull == true)
+                {
+                    <div class="status-overlay full">
+                        <i class="fas fa-users"></i>
+                        活动已满
+                    </div>
+                }
+                else if (eventItem?.AvailableSpots <= 10)
+                {
+                    <div class="status-overlay limited">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        仅剩 @eventItem.AvailableSpots 位
+                    </div>
+                }
+            </div>
+            
+            <div class="event-header">
+                <div class="breadcrumb">
+                    <button class="btn btn-link" @onclick="NavigateToEvents">
+                        <i class="fas fa-arrow-left"></i>
+                        返回活动列表
+                    </button>
+                </div>
+                
+                <h1 class="event-title">@eventItem?.Name</h1>
+                
+                <div class="event-meta">
+                    <span class="event-category">@eventItem?.Category</span>
+                    <span class="event-price">@eventItem?.FormattedPrice</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="event-content">
+            <div class="main-content">
+                <div class="event-description">
+                    <h3>活动描述</h3>
+                    <p>@eventItem?.Description</p>
+                </div>
+                
+                <div class="event-details">
+                    <h3>活动详情</h3>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <div>
+                                <strong>活动时间</strong>
+                                <span>@eventItem?.FormattedDate</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <strong>活动地点</strong>
+                                <span>@eventItem?.Location</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <i class="fas fa-users"></i>
+                            <div>
+                                <strong>参与人数</strong>
+                                <span>@eventItem?.CurrentAttendees / @eventItem?.Capacity 人</span>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <i class="fas fa-tag"></i>
+                            <div>
+                                <strong>活动费用</strong>
+                                <span>@eventItem?.FormattedPrice</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="capacity-info">
+                    <h3>容量信息</h3>
+                    <div class="capacity-bar">
+                        <div class="capacity-fill" style="width: @(eventItem != null ? ((double)eventItem.CurrentAttendees / eventItem.Capacity) * 100 : 0)%"></div>
+                    </div>
+                    <div class="capacity-text">
+                        <span>已报名: @eventItem?.CurrentAttendees 人</span>
+                        <span>总容量: @eventItem?.Capacity 人</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="registration-card">
+                    <h4>参与此活动</h4>
+                    <div class="price-display">
+                        <span class="price">@eventItem?.FormattedPrice</span>
+                    </div>
+                    
+                    @if (eventItem?.IsFull == true)
+                    {
+                        <button class="btn btn-secondary btn-block" disabled>
+                            <i class="fas fa-users"></i>
+                            活动已满
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success btn-block" @onclick="NavigateToRegistration">
+                            <i class="fas fa-calendar-plus"></i>
+                            立即报名
+                        </button>
+                    }
+                    
+                    <div class="registration-info">
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <span>报名截止: @eventItem?.Date.AddDays(-1).ToString("MM-dd HH:mm")</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-users"></i>
+                            <span>还有 @eventItem?.AvailableSpots 个名额</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="share-card">
+                    <h4>分享活动</h4>
+                    <div class="share-buttons">
+                        <button class="btn btn-outline-primary" @onclick="CopyLink">
+                            <i class="fas fa-link"></i>
+                            复制链接
+                        </button>
+                        <button class="btn btn-outline-success" @onclick="ShareToWeChat">
+                            <i class="fas fa-share-alt"></i>
+                            分享到微信
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int EventId { get; set; }
+    
+    private Event? eventItem;
+    private bool isLoading = true;
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadEventDetails();
+    }
+    
+    private async Task LoadEventDetails()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            await SessionService.UpdateLastActivityAsync();
+            eventItem = await EventService.GetEventByIdAsync(EventId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载活动详情时出错: {ex.Message}");
+            eventItem = null;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void NavigateToEvents()
+    {
+        Navigation.NavigateTo("/events");
+    }
+    
+    private void NavigateToRegistration()
+    {
+        Navigation.NavigateTo($"/events/{EventId}/register");
+    }
+    
+    private async Task CopyLink()
+    {
+        var url = Navigation.Uri;
+        // 在实际应用中，这里会调用JavaScript来复制链接到剪贴板
+        await Task.Delay(1);
+        // 显示提示消息
+        Console.WriteLine($"链接已复制: {url}");
+    }
+    
+    private async Task ShareToWeChat()
+    {
+        // 在实际应用中，这里会调用微信分享API
+        await Task.Delay(1);
+        Console.WriteLine("分享到微信功能暂未实现");
+    }
+}

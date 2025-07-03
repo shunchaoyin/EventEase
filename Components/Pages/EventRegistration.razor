@@ -1,0 +1,289 @@
+@page "/events/{EventId:int}/register"
+@inject IEventService EventService
+@inject IUserSessionService SessionService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>活动报名 - EventEase</PageTitle>
+
+@if (isLoading)
+{
+    <div class="loading-container">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">加载中...</span>
+        </div>
+        <p>正在加载活动信息...</p>
+    </div>
+}
+else if (eventItem is null)
+{
+    <div class="error-container">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2>活动不存在</h2>
+        <p>抱歉，您要报名的活动不存在或已被删除。</p>
+        <button class="btn btn-primary" @onclick="NavigateToEvents">
+            <i class="fas fa-arrow-left"></i>
+            返回活动列表
+        </button>
+    </div>
+}
+else
+{
+    <div class="registration-page">
+        <div class="page-header">
+            <div class="breadcrumb">
+                <button class="btn btn-link" @onclick="NavigateToEvents">
+                    <i class="fas fa-arrow-left"></i>
+                    活动列表
+                </button>
+                <span class="breadcrumb-separator">></span>
+                <button class="btn btn-link" @onclick="NavigateToEventDetails">
+                    @eventItem?.Name
+                </button>
+                <span class="breadcrumb-separator">></span>
+                <span>活动报名</span>
+            </div>
+            
+            <h1 class="page-title">
+                <i class="fas fa-calendar-plus"></i>
+                活动报名
+            </h1>
+        </div>
+
+        <div class="registration-content">
+            <div class="event-summary">
+                <div class="event-image">
+                    @if (!string.IsNullOrEmpty(eventItem?.ImageUrl))
+                    {
+                        <img src="@eventItem.ImageUrl" alt="@eventItem.Name" />
+                    }
+                    else
+                    {
+                        <div class="placeholder-image">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    }
+                </div>
+                
+                <div class="event-info">
+                    <h3>@eventItem?.Name</h3>
+                    <div class="event-details">
+                        <div class="detail-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>@eventItem?.FormattedDate</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>@eventItem?.Location</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-tag"></i>
+                            <span>@eventItem?.FormattedPrice</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-users"></i>
+                            <span>还有 @eventItem?.AvailableSpots 个名额</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="registration-form">
+                <h3>报名信息</h3>
+                
+                @if (eventItem?.IsFull == true)
+                {
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>活动已满!</strong> 此活动已达到最大容量，暂时无法报名。
+                    </div>
+                }
+                else if (registrationSuccess)
+                {
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>报名成功!</strong> 您已成功报名此活动。我们将通过邮件或短信与您确认。
+                    </div>
+                    
+                    <div class="success-actions">
+                        <button class="btn btn-primary" @onclick="NavigateToEventDetails">
+                            <i class="fas fa-eye"></i>
+                            查看活动详情
+                        </button>
+                        <button class="btn btn-outline-primary" @onclick="NavigateToEvents">
+                            <i class="fas fa-list"></i>
+                            浏览更多活动
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <EditForm Model="registration" OnValidSubmit="HandleRegistration">
+                        <DataAnnotationsValidator />
+                        
+                        <div class="form-group">
+                            <label for="name">姓名 *</label>
+                            <InputText id="name" class="form-control" @bind-Value="registration.Name" />
+                            <ValidationMessage For="() => registration.Name" class="text-danger" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">邮箱地址 *</label>
+                            <InputText id="email" type="email" class="form-control" @bind-Value="registration.Email" />
+                            <ValidationMessage For="() => registration.Email" class="text-danger" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">手机号码 *</label>
+                            <InputText id="phone" type="tel" class="form-control" @bind-Value="registration.Phone" />
+                            <ValidationMessage For="() => registration.Phone" class="text-danger" />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="requirements">特殊要求</label>
+                            <InputTextArea id="requirements" class="form-control" @bind-Value="registration.SpecialRequirements" rows="3" />
+                            <ValidationMessage For="() => registration.SpecialRequirements" class="text-danger" />
+                            <small class="form-text text-muted">
+                                请告诉我们您的特殊需求，例如饮食限制、无障碍需求等。
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="termsCheck" @bind="acceptTerms" />
+                                <label class="form-check-label" for="termsCheck">
+                                    我同意遵守活动规则和条款
+                                </label>
+                            </div>
+                            @if (showTermsError)
+                            {
+                                <div class="text-danger">请同意活动规则和条款</div>
+                            }
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success btn-lg" disabled="@isSubmitting">
+                                @if (isSubmitting)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <span>提交中...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>确认报名</span>
+                                }
+                            </button>
+                            
+                            <button type="button" class="btn btn-outline-secondary" @onclick="NavigateToEventDetails">
+                                <i class="fas fa-arrow-left"></i>
+                                返回活动详情
+                            </button>
+                        </div>
+                    </EditForm>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int EventId { get; set; }
+    
+    private Event? eventItem;
+    private UserRegistration registration = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool registrationSuccess = false;
+    private bool acceptTerms = false;
+    private bool showTermsError = false;
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadEventDetails();
+    }
+    
+    private async Task LoadEventDetails()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+            
+            await SessionService.UpdateLastActivityAsync();
+            eventItem = await EventService.GetEventByIdAsync(EventId);
+            
+            if (eventItem != null)
+            {
+                registration.EventId = EventId;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载活动详情时出错: {ex.Message}");
+            eventItem = null;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private async Task HandleRegistration()
+    {
+        try
+        {
+            // 验证条款同意
+            if (!acceptTerms)
+            {
+                showTermsError = true;
+                return;
+            }
+            
+            showTermsError = false;
+            isSubmitting = true;
+            StateHasChanged();
+            
+            await SessionService.UpdateLastActivityAsync();
+            
+            // 模拟提交延迟
+            await Task.Delay(1500);
+            
+            var success = await EventService.RegisterForEventAsync(EventId, registration);
+            
+            if (success)
+            {
+                registrationSuccess = true;
+                // 重新加载活动信息以更新参与人数
+                await LoadEventDetails();
+            }
+            else
+            {
+                // 处理注册失败的情况
+                Console.WriteLine("注册失败: 活动可能已满或发生其他错误");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"注册时出错: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void NavigateToEvents()
+    {
+        Navigation.NavigateTo("/events");
+    }
+    
+    private void NavigateToEventDetails()
+    {
+        Navigation.NavigateTo($"/events/{EventId}");
+    }
+}

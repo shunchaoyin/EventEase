@@ -1,0 +1,106 @@
+@inject NavigationManager Navigation
+
+<div class="event-card @(IsSelected ? "selected" : "")" @onclick="HandleCardClick">
+    <div class="event-image">
+        @if (!string.IsNullOrEmpty(Event.ImageUrl))
+        {
+            <img src="@Event.ImageUrl" alt="@Event.Name" onerror="this.src='/images/default-event.jpg'" />
+        }
+        else
+        {
+            <div class="placeholder-image">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+        }
+        @if (Event.IsFull)
+        {
+            <div class="status-badge full">已满</div>
+        }
+        else if (Event.AvailableSpots <= 10)
+        {
+            <div class="status-badge limited">仅剩@Event.AvailableSpots位</div>
+        }
+    </div>
+    
+    <div class="event-content">
+        <div class="event-header">
+            <h3 class="event-title">@Event.Name</h3>
+            <span class="event-category">@Event.Category</span>
+        </div>
+        
+        <div class="event-details">
+            <div class="detail-item">
+                <i class="fas fa-calendar"></i>
+                <span>@Event.FormattedDate</span>
+            </div>
+            
+            <div class="detail-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>@Event.Location</span>
+            </div>
+            
+            <div class="detail-item">
+                <i class="fas fa-users"></i>
+                <span>@Event.CurrentAttendees/@Event.Capacity 人</span>
+            </div>
+            
+            <div class="detail-item price">
+                <i class="fas fa-tag"></i>
+                <span class="price-text">@Event.FormattedPrice</span>
+            </div>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(Event.Description))
+        {
+            <p class="event-description">
+                @(Event.Description.Length > 100 ? Event.Description.Substring(0, 100) + "..." : Event.Description)
+            </p>
+        }
+        
+        <div class="event-actions">
+            <button class="btn btn-primary" @onclick="@(async () => await NavigateToDetails())" @onclick:stopPropagation="true">
+                查看详情
+            </button>
+            
+            @if (!Event.IsFull)
+            {
+                <button class="btn btn-success" @onclick="@(async () => await NavigateToRegistration())" @onclick:stopPropagation="true">
+                    立即报名
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-secondary" disabled>
+                    活动已满
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Event Event { get; set; } = new();
+    [Parameter] public bool IsSelected { get; set; }
+    [Parameter] public EventCallback<Event> OnCardSelected { get; set; }
+    [Parameter] public bool ShowActions { get; set; } = true;
+    
+    private async Task HandleCardClick()
+    {
+        if (OnCardSelected.HasDelegate)
+        {
+            await OnCardSelected.InvokeAsync(Event);
+        }
+    }
+    
+    private async Task NavigateToDetails()
+    {
+        await Task.Delay(1);
+        Navigation.NavigateTo($"/events/{Event.Id}");
+    }
+    
+    private async Task NavigateToRegistration()
+    {
+        await Task.Delay(1);
+        Navigation.NavigateTo($"/events/{Event.Id}/register");
+    }
+}
